@@ -1,0 +1,109 @@
+<t t-name="purchase.report_purchaseorder_document">
+    <t t-call="web.external_layout">
+        <t t-set="o" t-value="o.with_context(lang=o.partner_id.lang)"/>
+        <t t-set="address">
+            <div t-field="o.partner_id" t-options="{'widget': 'contact', 'fields': ['address','name','phone','vat'], 'no_marker': True, 'phone_icons': True}"/>
+        </t>
+        <t t-if="o.dest_address_id">
+            <t t-set="information_block">
+                <strong>Shipping address</strong>
+                <div t-if="o.dest_address_id">
+                    <div t-field="o.dest_address_id" t-options="{'widget': 'contact', 'fields': ['address','name','phone'], 'no_marker': True, 'phone_icons': True}" name="purchase_shipping_address"/>
+                </div>
+            </t>
+        </t>
+
+        <div class="page">
+            <div class="oe_structure"/>
+
+            <!-- Document Title -->
+            <div class="mt-4">
+                <t t-set="layout_document_title">
+                    <t t-if="o.state in ['draft','sent','to approve']">Request for Quotation #<span t-field="o.name"/></t>
+                    <t t-if="o.state in ['purchase','done']">Purchase Order #<span t-field="o.name"/></t>
+                    <t t-if="o.state == 'cancel'">Cancelled Purchase Order #<span t-field="o.name"/></t>
+                </t>
+            </div>
+
+            <!-- Information Block -->
+            <div id="informations" class="row mb-4">
+                <div t-if="o.user_id" class="col">
+                    <strong>Buyer</strong>
+                    <div t-field="o.user_id"/>
+                </div>
+                <div t-if="o.partner_ref" class="col">
+                    <strong>Your Order Reference</strong>
+                    <div t-field="o.partner_ref"/>
+                </div>
+                <div t-if="o.state in ['purchase','done'] and o.date_approve" class="col-3 bm-2">
+                    <strong>Order Date:</strong>
+                    <p t-field="o.date_approve" t-options="{'date_only': 'true'}" class="m-0"/>
+                </div>
+                <div t-elif="o.date_order" class="col-2 bm-2">
+                    <strong>Order Deadline:</strong>
+                    <p t-field="o.date_order" t-options="{'date_only': 'true'}" class="m-0"/>
+                </div>
+                <div t-if="o.date_planned" class="col-2 bm-2">
+                    <strong>Expected Arrival:</strong>
+                    <p t-field="o.date_planned" t-options="{'date_only': 'true'}" class="m-0"/>
+                </div>
+            </div>
+
+            <!-- Totals -->
+            <div id="total" class="row justify-content-end mt-n3">
+                <div class="col-4">
+                    <table class="o_total_table table table-borderless">
+                        <t t-call="purchase.document_tax_totals">
+                            <t t-set="tax_totals" t-value="o.tax_totals"/>
+                            <t t-set="currency" t-value="o.currency_id"/>
+                        </t>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Notes -->
+            <p t-field="o.notes" class="mt-4"/>
+
+            <!-- Created By -->
+            <div class="mt-4">
+                <strong>Created By:</strong>
+                <span t-out="creator_name"/>
+            </div>
+
+            <t t-if="creator_signature">
+                <div class="mt-2">
+                    <strong>Signature:</strong>
+                    <img t-att-src="'data:image/png;base64,%s' % creator_signature" style="max-height:80px;"/>
+                </div>
+            </t>
+            <t t-else="">
+                <span>No signature available</span>
+            </t>
+
+           <!-- Approvals Section --> 
+           <t t-if="o.state in ['purchase','done'] and approvals"> 
+           <div class="mt-4"> <strong>Approvals:</strong> </div> 
+           <t t-foreach="approvals" t-as="approval"> 
+           <div class="mt-2"> <strong>Approved By:</strong> <span t-out="approval['name']"/> </div> 
+           <t t-if="approval['signature']"> 
+           <div class="mt-2"> <strong>Approval Signature:</strong> <img t-att-src="'data:image/png;base64,%s' % approval['signature']" style="max-height:80px;"/> 
+           </div> 
+           </t> 
+           <t t-else=""> 
+           <span>No approval signature available</span> 
+           </t> 
+           <hr/> 
+           </t> 
+           </t>
+            <p t-field="o.notes" class="mt-4"/>
+            <div class="oe_structure"/>
+
+            <!-- Portal Link -->
+            <t t-set="base_address" t-value="o.env['ir.config_parameter'].sudo().get_param('web.base.url')"/>
+            <t t-set="portal_url" t-value="base_address + '/my/purchase/' + str(o.id) + '#portal_connect_software_modal'"/>
+            <div t-if="any(u._is_portal() for u in o.partner_id.user_ids)" class="text-center">
+                <a t-att-href="portal_url">Connect your software</a> with <t t-out="o.company_id.name"/> to create quotes automatically.
+            </div>
+        </div>
+    </t>
+</t>
